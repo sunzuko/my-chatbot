@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 
 export default function Home() {
   const [input, setInput] = useState('');
-  const [messages, setMessages] = useState<any[]>([]); // チャットログ管理
+  const [messages, setMessages] = useState<{ type: string; text: string }[]>([]); // チャットログ管理
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
