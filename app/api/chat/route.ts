@@ -20,7 +20,7 @@ export async function POST(req: Request) {
       ],
     });
 
-    const responseText = completion.choices[0].message.content;
+const responseText = completion.choices[0].message.content || '';
 
     const speech = await openai.audio.speech.create({
       model: 'tts-1',
@@ -28,8 +28,7 @@ export async function POST(req: Request) {
       input: responseText,
       
     });
-    if (responseText === null) {
-  throw new Error('No response text from OpenAI');
+
 }
 
 
