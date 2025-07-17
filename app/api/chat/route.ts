@@ -26,7 +26,12 @@ export async function POST(req: Request) {
       model: 'tts-1',
       voice: 'alloy',
       input: responseText,
+      
     });
+    if (responseText === null) {
+  throw new Error('No response text from OpenAI');
+}
+
 
     const audioBuffer = Buffer.from(await speech.arrayBuffer());
 
