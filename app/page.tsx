@@ -6,7 +6,9 @@ export default function Home() {
   // --- 音声認識用ユーティリティ ------------------------------
 const SpeechRecognition =
   (typeof window !== 'undefined' &&
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     ((window as any).SpeechRecognition ||
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (window as any).webkitSpeechRecognition)) || null;
 
 function startListening() {
@@ -19,8 +21,8 @@ function startListening() {
   recognition.lang = 'ja-JP';
   recognition.interimResults = false;
   recognition.maxAlternatives = 1;
-
-  recognition.onresult = (e: SpeechRecognitionEvent) => {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+  recognition.onresult = (e: any) => {
     const transcript = e.results[0][0].transcript;
     setInput(transcript);                        // 入力欄に反映
     (document.getElementById('askForm') as HTMLFormElement)?.requestSubmit();
