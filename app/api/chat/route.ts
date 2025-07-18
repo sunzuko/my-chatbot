@@ -12,6 +12,7 @@ export async function POST(req: Request) {
   `;
 
   try {
+    // GPTでテキスト生成
     const completion = await openai.chat.completions.create({
       model: 'gpt-4o-mini',
       messages: [
@@ -22,15 +23,26 @@ export async function POST(req: Request) {
 
     const responseText = completion.choices[0].message.content || '';
 
-    return new Response(
-      JSON.stringify({ text: responseText }),
-      { status: 200, headers: { 'Content-Type': 'application/json' } }
-    );
+    // TTSで音声生成 (MP3)
+    const speech = await openai.audio.speech.create({
+      model: 'tts-1',
+      voice: 'alloy', // 自然な声 (日本語OK)
+      input: responseText,
+    });
 
+    // MP3をbase64に変換
+    const audioBuffer = Buffer.from(await speech.arrayBuffer());
+    const audioBase64 = audioBuffer.toString('base64');
+
+    // テキスト + base64返却
+    return new Response(JSON.stringify({ text: responseText, audio: audioBase64 }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' }
+    });
   } catch (error) {
-    return new Response(
-      JSON.stringify({ error: 'OpenAIエラー: ' + (error as Error).message }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
-    );
+    return new Response(JSON.stringify({ error: 'OpenAIエラー: ' + (error as Error).message }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' }
+    });
   }
 }

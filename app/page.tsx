@@ -4,34 +4,34 @@ import React, { useState } from 'react';
 
 export default function Home() {
   // --- 音声認識用ユーティリティ ------------------------------
-const SpeechRecognition =
-  (typeof window !== 'undefined' &&
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ((window as any).SpeechRecognition ||
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (window as any).webkitSpeechRecognition)) || null;
+  const SpeechRecognition =
+    (typeof window !== 'undefined' &&
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      ((window as any).SpeechRecognition ||
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (window as any).webkitSpeechRecognition)) || null;
 
-function startListening() {
-  if (!SpeechRecognition) {
-    alert('このブラウザは音声認識に対応していません');
-    return;
+  function startListening() {
+    if (!SpeechRecognition) {
+      alert('このブラウザは音声認識に対応していません');
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'ja-JP';
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    recognition.onresult = (e: any) => {
+      const transcript = e.results[0][0].transcript;
+      setInput(transcript);                        // 入力欄に反映
+      (document.getElementById('askForm') as HTMLFormElement)?.requestSubmit();
+    };
+
+    recognition.onerror = () => alert('音声認識に失敗しました');
+    recognition.start();
   }
-
-  const recognition = new SpeechRecognition();
-  recognition.lang = 'ja-JP';
-  recognition.interimResults = false;
-  recognition.maxAlternatives = 1;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-  recognition.onresult = (e: any) => {
-    const transcript = e.results[0][0].transcript;
-    setInput(transcript);                        // 入力欄に反映
-    (document.getElementById('askForm') as HTMLFormElement)?.requestSubmit();
-  };
-
-  recognition.onerror = () => alert('音声認識に失敗しました');
-  recognition.start();
-}
-// ------------------------------------------------------------
+  // ------------------------------------------------------------
 
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState<{ type: string; text: string }[]>([]); // チャットログ管理
@@ -55,39 +55,14 @@ function startListening() {
     }
 
     setMessages([...messages, { type: 'bot', text: data.text }]);
-// ブラウザ TTS で読み上げ
-// ── 音声読み上げ（iOS 対応版）ここから ──
-// ===== シンプル多言語 TTS =====
-const utterance = new SpeechSynthesisUtterance(data.text);
 
-// 1行だけの超ざっくり判定
-utterance.lang = /[\u3040-\u30ff\u4e00-\u9fff]/.test(data.text)
-  ? 'ja-JP'   // 日本語 or 漢字を含む → 日本語
-  : 'en-US';  // それ以外 → 英語
-
-speechSynthesis.cancel();      // キューをクリア（iOS対策）
-speechSynthesis.speak(utterance);
-// ===== ここまで =====
-
-
-// 日本語ボイスがロードされるのを待ってから再生
-const setVoiceAndSpeak = () => {
-  const jpVoice = speechSynthesis.getVoices().find(v => v.lang === 'ja-JP');
-  if (jpVoice) utterance.voice = jpVoice;   // Kyoko / Otoya など
-  speechSynthesis.speak(utterance);
-};
-
-if (speechSynthesis.getVoices().length === 0) {
-  // iOS は voices() が遅延ロード。イベントを一度だけ待つ
-  speechSynthesis.addEventListener('voiceschanged', setVoiceAndSpeak, { once: true });
-} else {
-  setVoiceAndSpeak();
-}
-// ── 音声読み上げここまで ──
-
-
-    const audio = new Audio(`data:audio/mp3;base64,${data.audio}`);
-    audio.play();
+    // サーバーTTS音声再生
+    if (data.audio) {
+      const audio = new Audio(`data:audio/mp3;base64,${data.audio}`);
+      audio.play();
+    } else {
+      alert('音声生成に失敗しました');
+    }
 
     setInput('');
   };
@@ -102,7 +77,7 @@ if (speechSynthesis.getVoices().length === 0) {
           </p>
         ))}
       </div>
-      <form id="askForm"  onSubmit={handleSubmit}>
+      <form id="askForm" onSubmit={handleSubmit}>
         <input
           type="text"
           value={input}
@@ -113,9 +88,8 @@ if (speechSynthesis.getVoices().length === 0) {
         <button type="submit">送信</button>
       </form>
       <button type="button" onClick={startListening} style={{ marginTop: 8 }}>
-  🎤 話す
-</button>
-
+        🎤 話す
+      </button>
     </div>
   );
 }
