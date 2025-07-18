@@ -56,9 +56,25 @@ function startListening() {
 
     setMessages([...messages, { type: 'bot', text: data.text }]);
 // ブラウザ TTS で読み上げ
+// ── 音声読み上げ（iOS 対応版）ここから ──
 const utterance = new SpeechSynthesisUtterance(data.text);
 utterance.lang = 'ja-JP';
-speechSynthesis.speak(utterance);
+
+// 日本語ボイスがロードされるのを待ってから再生
+const setVoiceAndSpeak = () => {
+  const jpVoice = speechSynthesis.getVoices().find(v => v.lang === 'ja-JP');
+  if (jpVoice) utterance.voice = jpVoice;   // Kyoko / Otoya など
+  speechSynthesis.speak(utterance);
+};
+
+if (speechSynthesis.getVoices().length === 0) {
+  // iOS は voices() が遅延ロード。イベントを一度だけ待つ
+  speechSynthesis.addEventListener('voiceschanged', setVoiceAndSpeak, { once: true });
+} else {
+  setVoiceAndSpeak();
+}
+// ── 音声読み上げここまで ──
+
 
     const audio = new Audio(`data:audio/mp3;base64,${data.audio}`);
     audio.play();
