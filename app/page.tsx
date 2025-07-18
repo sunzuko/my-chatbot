@@ -3,6 +3,34 @@
 import React, { useState } from 'react';
 
 export default function Home() {
+  // --- 音声認識用ユーティリティ ------------------------------
+const SpeechRecognition =
+  (typeof window !== 'undefined' &&
+    ((window as any).SpeechRecognition ||
+      (window as any).webkitSpeechRecognition)) || null;
+
+function startListening() {
+  if (!SpeechRecognition) {
+    alert('このブラウザは音声認識に対応していません');
+    return;
+  }
+
+  const recognition = new SpeechRecognition();
+  recognition.lang = 'ja-JP';
+  recognition.interimResults = false;
+  recognition.maxAlternatives = 1;
+
+  recognition.onresult = (e: SpeechRecognitionEvent) => {
+    const transcript = e.results[0][0].transcript;
+    setInput(transcript);                        // 入力欄に反映
+    (document.getElementById('askForm') as HTMLFormElement)?.requestSubmit();
+  };
+
+  recognition.onerror = () => alert('音声認識に失敗しました');
+  recognition.start();
+}
+// ------------------------------------------------------------
+
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState<{ type: string; text: string }[]>([]); // チャットログ管理
 
@@ -25,6 +53,10 @@ export default function Home() {
     }
 
     setMessages([...messages, { type: 'bot', text: data.text }]);
+// ブラウザ TTS で読み上げ
+const utterance = new SpeechSynthesisUtterance(data.text);
+utterance.lang = 'ja-JP';
+speechSynthesis.speak(utterance);
 
     const audio = new Audio(`data:audio/mp3;base64,${data.audio}`);
     audio.play();
@@ -42,7 +74,7 @@ export default function Home() {
           </p>
         ))}
       </div>
-      <form onSubmit={handleSubmit}>
+      <form id="askForm"  onSubmit={handleSubmit}>
         <input
           type="text"
           value={input}
@@ -52,6 +84,10 @@ export default function Home() {
         />
         <button type="submit">送信</button>
       </form>
+      <button type="button" onClick={startListening} style={{ marginTop: 8 }}>
+  🎤 話す
+</button>
+
     </div>
   );
 }
