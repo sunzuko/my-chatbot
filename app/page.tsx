@@ -57,8 +57,18 @@ function startListening() {
     setMessages([...messages, { type: 'bot', text: data.text }]);
 // ブラウザ TTS で読み上げ
 // ── 音声読み上げ（iOS 対応版）ここから ──
+// ===== シンプル多言語 TTS =====
 const utterance = new SpeechSynthesisUtterance(data.text);
-utterance.lang = 'ja-JP';
+
+// 1行だけの超ざっくり判定
+utterance.lang = /[\u3040-\u30ff\u4e00-\u9fff]/.test(data.text)
+  ? 'ja-JP'   // 日本語 or 漢字を含む → 日本語
+  : 'en-US';  // それ以外 → 英語
+
+speechSynthesis.cancel();      // キューをクリア（iOS対策）
+speechSynthesis.speak(utterance);
+// ===== ここまで =====
+
 
 // 日本語ボイスがロードされるのを待ってから再生
 const setVoiceAndSpeak = () => {
